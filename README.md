@@ -20,7 +20,7 @@ El contrato sigue buenas prácticas de seguridad y está documentado con NatSpec
 1️⃣ Clonar el repositorio:
 
 ```bash
-git clone <REPO_URL>
+git clone <https://github.com/JonhatanCorona/kipu-bank.git>
 cd Kipu-Bank
 ```
 
@@ -174,6 +174,8 @@ Prueba casos de:
 Ejemplo de test exitoso:
 
 ```bash
+KipuBank
+    ✔ Inicializa correctamente
 Deposits
   ✓ Permite depositar ETH dentro del bankCap
   ✓ Revertir si se supera el bankCap
@@ -190,5 +192,5 @@ Withdrawals
 Pull requests son bienvenidos. Para cambios grandes, abrir un issue primero para discutir lo que quieres cambiar.
 
 ## 📄 Licencia
-Autor: Jonhatan Corona
-MIT License
+- Autor: Jonhatan Corona
+- MIT License
