@@ -5,10 +5,15 @@
   "main": "index.js",
   "scripts": {
     "test": "echo \"Error: no test specified\" && exit 1",
-    "deploy-sepolia": "npx hardhat run scripts/deploy-sepolia.js --network sepolia",
-    "deposit-sepolia": "npx hardhat run scripts/deposit-sepolia.js --network sepolia",
-    "withdraw-sepolia": "npx hardhat run scripts/withdraw-sepolia.js --network sepolia",
-    "check-balances-sepolia": "npx hardhat run scripts/check-balances-sepolia.js --network sepolia"
+    "deploy": "npx hardhat run scripts/deploy.js --network sepolia",
+    "deposit-eth": "npx hardhat run scripts/deposit-eth.js --network sepolia",
+    "buy-kusd": "npx hardhat run scripts/buy-kusd.js --network sepolia",
+    "buy-keur": "npx hardhat run scripts/buy-keur.js --network sepolia",
+    "withdraw-eth": "npx hardhat run scripts/withdraw-eth.js --network sepolia",
+    "sell-kusd": "npx hardhat run scripts/sell-kusd.js --network sepolia",
+    "sell-keur": "npx hardhat run scripts/sell-keur.js --network sepolia",
+    "check-balances": "npx hardhat run scripts/check-balances.js --network sepolia",
+    "check-bank-totals": "npx hardhat run scripts/check-bank-totals.js --network sepolia"
   },
   "keywords": [],
   "author": "",
@@ -24,6 +29,8 @@
     "solidity-coverage": "^0.8.16"
   },
   "dependencies": {
+    "@chainlink/contracts": "^1.5.0",
+    "@openzeppelin/contracts": "^5.4.0",
     "dotenv": "^17.2.3"
   }
 }
