@@ -24,7 +24,7 @@ async function main() {
   }
 
   // --- Vender KEUR ---
-  const amountToSell = hre.ethers.parseUnits("5", 18);
+  const amountToSell = hre.ethers.parseUnits("0.01", 18);
   if (amountToSell > vaults.eurBalance) {
     console.log("❌ No tienes suficiente KEUR para vender esa cantidad");
     return;

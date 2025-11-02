@@ -5,79 +5,117 @@ import "@openzeppelin/contracts/token/ERC20/ERC20.sol";
 import "@openzeppelin/contracts/access/AccessControl.sol";
 
 /// @title KipuUSD Token (KUSD)
-/// @notice Token estable interno del ecosistema Kipu, solo gestionado por el KipuBank
+/// @notice Token estable interno del ecosistema Kipu, gestionado únicamente por el contrato KipuBank
+/// @dev Funciona como ERC20 estándar con roles de administración y restricciones de wallet/venta
 contract KipuDolar is ERC20, AccessControl {
+    
+// --- Roles ---
+/// @notice Rol de super administrador con permisos totales sobre el token
+bytes32 public constant SUPER_ADMIN_ROLE = keccak256("SUPER_ADMIN_ROLE");
+/// @notice Rol de administrador con permisos limitados sobre el token
+bytes32 public constant ADMIN_ROLE = keccak256("ADMIN_ROLE");
 
-    bytes32 public constant SUPER_ADMIN_ROLE = keccak256("SUPER_ADMIN_ROLE");
-        bytes32 public constant ADMIN_ROLE = keccak256("ADMIN_ROLE");
+// --- Variables configurables ---
+/// @notice Límite máximo de KUSD que un usuario puede tener en su wallet
+uint256 public kusdWalletLimit;
 
+/// @notice Precio de 1 KUSD en ETH (expresado en wei)
+uint256 public kusdPriceInETH;
 
-    /// @notice Límite máximo de KUSD que un usuario puede tener en su wallet
-    uint256 public kusdWalletLimit;
+/// @notice Monto máximo de KUSD que un usuario puede vender de una sola vez
+uint256 public kusdMaxSellAmount;
 
-    /// @notice Precio de 1 KUSD en ETH (ejemplo: 0.01 ETH por 1 KUSD)
-    uint256 public kusdPriceInETH; // en wei
+// --- Errores personalizados ---
+/// @notice Se lanza cuando se excede el límite de KUSD por wallet
+error WalletKUSDLimited();
+/// @notice Se lanza cuando un monto es inválido (ej. cero)
+error InvalidAmount();
 
-    /// @notice Monto mínimo de venta de KUSD (por ejemplo, 5 KUSD)
-    uint256 public kusdMinSellAmount;
+// --- Constructor ---
+/// @param kipuBank Dirección del contrato KipuBank que tendrá permisos de administración
+/// @param _kusdWalletLimit Límite inicial de KUSD por wallet
+/// @param _kusdPriceInETH Precio inicial de KUSD en ETH (wei)
+/// @param _kusdMaxSellAmount Monto máximo inicial de venta de KUSD
+constructor(
+    address kipuBank,
+    uint256 _kusdWalletLimit,
+    uint256 _kusdPriceInETH,
+    uint256 _kusdMaxSellAmount
+) ERC20("KipuDolar", "KUSD") {
+    // Asignar roles de administración al banco
+    _grantRole(DEFAULT_ADMIN_ROLE, kipuBank);
+    _grantRole(SUPER_ADMIN_ROLE, kipuBank);
 
-    // --- Errores personalizados ---
-    error WalletKUSDLimited();
-    error InvalidAmount();
+    // Inicializar variables configurables
+    kusdWalletLimit = _kusdWalletLimit;
+    kusdPriceInETH = _kusdPriceInETH;
+    kusdMaxSellAmount = _kusdMaxSellAmount;
+}
 
-    constructor(
-        address kipuBank,
-        uint256 _kusdWalletLimit,
-        uint256 _kusdPriceInETH,
-        uint256 _kusdMinSellAmount
-    ) ERC20("KipuDolar", "KUSD") {
-        _grantRole(DEFAULT_ADMIN_ROLE, kipuBank);
-        _grantRole(SUPER_ADMIN_ROLE, kipuBank);
-
-        kusdWalletLimit = _kusdWalletLimit;
-        kusdPriceInETH = _kusdPriceInETH;
-        kusdMinSellAmount = _kusdMinSellAmount;
+// --- Modificador ---
+/// @notice Restringe acceso a funciones solo a ADMIN o SUPER_ADMIN
+modifier onlyAdminOrSuper() {
+    if (!hasRole(ADMIN_ROLE, msg.sender) && !hasRole(SUPER_ADMIN_ROLE, msg.sender)) {
+        revert("Not admin or super admin");
     }
+    _;
+}
 
-    /// @notice Mintea nuevos tokens (solo el banco puede hacerlo)
-    function mint(address to, uint256 amount)
-        external
-        onlyRole(SUPER_ADMIN_ROLE)
-    {
-        uint256 total = balanceOf(to) + amount;
-        if (total > kusdWalletLimit) revert WalletKUSDLimited();
-        _mint(to, amount);
-    }
+// --- Funciones del token ---
 
-    /// @notice Quita tokens del usuario (solo el banco)
-    function burn(address from, uint256 amount)
-        external
-        onlyRole(SUPER_ADMIN_ROLE)
-    {
-        _burn(from, amount);
-    }
+/// @notice Mintea nuevos tokens KUSD a una wallet específica
+/// @dev Solo el SUPER_ADMIN puede llamar esta función
+/// @param to Dirección del usuario que recibirá los tokens
+/// @param amount Cantidad de tokens a mintear
+/// @custom:revert Lanza WalletKUSDLimited si se excede el límite de KUSD por wallet
+function mint(address to, uint256 amount)
+    external
+    onlyRole(SUPER_ADMIN_ROLE)
+{
+    uint256 total = balanceOf(to) + amount;
+    if (total > kusdWalletLimit) revert WalletKUSDLimited();
+    _mint(to, amount);
+}
 
-    /// @notice Permite actualizar el límite máximo por wallet
-    function setWalletLimit(uint256 newLimit)
-        external
-        onlyRole(SUPER_ADMIN_ROLE)
-    {
-        kusdWalletLimit = newLimit;
-    }
+/// @notice Elimina tokens KUSD de circulación desde una wallet
+/// @dev Solo el SUPER_ADMIN puede llamar esta función
+/// @param from Dirección del usuario desde la cual se quemarán los tokens
+/// @param amount Cantidad de tokens a quemar
+function burn(address from, uint256 amount)
+    external
+    onlyRole(SUPER_ADMIN_ROLE)
+{
+    _burn(from, amount);
+}
 
-    /// @notice Permite actualizar el precio ETH → KUSD
-    function setPrice(uint256 newPriceInETH)
-        external
-        onlyRole(SUPER_ADMIN_ROLE)
-    {
-        kusdPriceInETH = newPriceInETH;
-    }
+/// @notice Actualiza el límite máximo de KUSD por wallet
+/// @dev Solo ADMIN o SUPER_ADMIN pueden modificarlo
+/// @param newLimit Nuevo límite de KUSD por wallet
+function setWalletLimit(uint256 newLimit)
+    external
+    onlyAdminOrSuper
+{
+    kusdWalletLimit = newLimit;
+}
 
-    /// @notice Permite actualizar el monto mínimo de venta
-    function setMinSellAmount(uint256 newMin)
-        external
-        onlyRole(SUPER_ADMIN_ROLE)
-    {
-        kusdMinSellAmount = newMin;
-    }
+/// @notice Actualiza el precio de 1 KUSD en ETH
+/// @dev Solo el SUPER_ADMIN puede modificarlo
+/// @param newPriceInETH Nuevo precio de KUSD expresado en wei
+function setPrice(uint256 newPriceInETH)
+    external
+    onlyRole(SUPER_ADMIN_ROLE)
+{
+    kusdPriceInETH = newPriceInETH;
+}
+
+/// @notice Actualiza el monto máximo de venta de KUSD
+/// @dev Solo ADMIN o SUPER_ADMIN pueden modificarlo
+/// @param newMax Nuevo monto máximo de venta
+function setMinSellAmount(uint256 newMax)
+    external
+    onlyAdminOrSuper
+{
+    kusdMaxSellAmount = newMax;
+}
+
 }

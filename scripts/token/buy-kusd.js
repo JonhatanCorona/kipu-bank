@@ -20,7 +20,7 @@ async function main() {
   console.log(`💵 Equivalente en USD: $${ethUsd.toFixed(2)}\n`);
 
   // --- Comprar KUSD ---
-  const ethToSpend = hre.ethers.parseEther("0.0001");
+  const ethToSpend = hre.ethers.parseEther("0.001");
   console.log(`🛒 Comprando KUSD con ${hre.ethers.formatEther(ethToSpend)} ETH...`);
 
   const buyTx = await bank.buyKUSD({ value: ethToSpend });

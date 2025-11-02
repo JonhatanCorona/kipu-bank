@@ -21,7 +21,7 @@ async function main() {
   }
 
   // --- Vender KUSD ---
-  const amountToSell = hre.ethers.parseUnits("5", 18);
+  const amountToSell = hre.ethers.parseUnits("0.01", 18);
   if (amountToSell > vaults.usdBalance) {
     console.log("❌ No tienes suficiente KUSD para vender esa cantidad");
     return;

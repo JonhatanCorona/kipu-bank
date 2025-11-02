@@ -4,7 +4,7 @@ pragma solidity ^0.8.28;
 import "@chainlink/contracts/src/v0.8/shared/interfaces/AggregatorV3Interface.sol";
 
 /// @title PriceOracle
-/// @notice Maneja los oráculos Chainlink de ETH/USD y ETH/EUR para el ecosistema Kipu
+/// @notice Maneja los oráculos Chainlink de ETH/USD para el ecosistema Kipu
 contract PriceOracle {
     /// @notice Oráculo Chainlink ETH/USD
     AggregatorV3Interface public immutable ethUsdPriceFeed;
