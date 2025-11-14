@@ -17,31 +17,27 @@ async function main() {
   const eurAddress = await bank.eurToken();
   const uds = await hre.ethers.getContractAt("KipuDolar", udsAddress, signer);
   const eur = await hre.ethers.getContractAt("KipuEuro", eurAddress, signer);
+  
 
   // --- 4️⃣ Obtener balances y valor ETH en USD usando la view getMyVaults ---
   const vaults = await bank.getMyVaults();
-  const ethBalance = vaults.ethBalance;
-  const usdBalance = vaults.usdBalance;
-  const eurBalance = vaults.eurBalance;
-  const ethInUsd = vaults.ethInUsd;
+const ethBalance = vaults.ethBalance;
+const usdBalance = vaults.usdBalance;
+const eurBalance = vaults.eurBalance;
+const usdcBalance = vaults.usdcBalance;
+const ethInUsd = vaults.ethInUsd;
 
-  console.log("💰 Balances actuales:");
-  console.log(`   • ETH:  ${hre.ethers.formatEther(ethBalance)} ETH (~$${(Number(hre.ethers.formatEther(ethInUsd))).toFixed(2)} USD)`);
-  console.log(`   • KUSD: ${hre.ethers.formatUnits(usdBalance, 18)} KUSD`);
-  console.log(`   • KEUR: ${hre.ethers.formatUnits(eurBalance, 18)} KEUR`);
+console.log("💰 Balances actuales:");
+console.log(`   • ETH:  ${hre.ethers.formatEther(ethBalance)} ETH (~$${Number(hre.ethers.formatEther(ethInUsd)).toFixed(2)} USD)`);
+console.log(`   • KUSD: ${hre.ethers.formatUnits(usdBalance, 18)} KUSD`);
+console.log(`   • KEUR: ${hre.ethers.formatUnits(eurBalance, 18)} KEUR`);
+console.log(`   • USDC: ${hre.ethers.formatUnits(usdcBalance, 18)} USDC`);
 
   // --- 5️⃣ Estadísticas básicas ---
   const basicStats = await bank.getMyStats();
   console.log("\n📊 Estadísticas básicas:");
   console.log(`   • Total depósitos: ${basicStats.depositCount}`);
   console.log(`   • Total retiros:   ${basicStats.withdrawalCount}`);
-
-  // --- 6️⃣ Estadísticas detalladas ---
-  const detailedStats = await bank.getMyDetailedStats();
-  console.log("\n📈 Estadísticas detalladas por moneda:");
-  console.log(`   • ETH:  depositado ${hre.ethers.formatEther(detailedStats.ethDeposited)} ETH, retirado ${hre.ethers.formatEther(detailedStats.ethWithdrawn)} ETH`);
-  console.log(`   • KUSD: comprado ${hre.ethers.formatUnits(detailedStats.usdDeposited, 18)} KUSD, vendido ${hre.ethers.formatUnits(detailedStats.usdWithdrawn, 18)} KUSD`);
-  console.log(`   • KEUR: comprado ${hre.ethers.formatUnits(detailedStats.eurDeposited, 18)} KEUR, vendido ${hre.ethers.formatUnits(detailedStats.eurWithdrawn, 18)} KEUR`);
 }
 
 main()

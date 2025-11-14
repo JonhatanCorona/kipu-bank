@@ -9,9 +9,6 @@ contract PriceOracle {
     /// @notice Oráculo Chainlink ETH/USD
     AggregatorV3Interface public immutable ethUsdPriceFeed;
 
-    /// @notice Oráculo Chainlink ETH/EUR
-    AggregatorV3Interface public immutable ethEurPriceFeed;
-
     /// @param _ethUsdFeed Dirección del oráculo ETH/USD
     constructor(address _ethUsdFeed) {
         require(_ethUsdFeed != address(0), "Invalid feed");

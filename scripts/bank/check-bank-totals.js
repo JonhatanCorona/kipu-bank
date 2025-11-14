@@ -26,6 +26,9 @@ async function main() {
     console.log(`   💰 KEUR comprado:         ${hre.ethers.formatUnits(totals.eurDeposits, 18)} KEUR`);
     console.log(`   💸 KEUR vendido:          ${hre.ethers.formatUnits(totals.eurWithdrawals, 18)} KEUR`);
     
+    const usdcDeposits = Number(hre.ethers.formatUnits(totals.usdcDeposits, 6));
+    console.log(`   💰 USDC comprado:         ${usdcDeposits.toFixed(1)} USDC`);
+
     console.log(`   📊 Total depósitos:       ${totals.depositCount.toString()}`);
     console.log(`   📉 Total retiros:         ${totals.withdrawalCount.toString()}\n`);
   } catch (error) {

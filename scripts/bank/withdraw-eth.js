@@ -27,7 +27,7 @@ const vaultUsdBalance = (Number(ethUsdPrice) / 1e8) * vaultEthBalance;
 console.log(`🏦 ETH en bóveda: ${vaultEthBalance.toFixed(6)} ETH ($${vaultUsdBalance.toFixed(2)})\n`);
 
 // --- 4️⃣ Monto a retirar ---
-const ethToWithdraw = hre.ethers.parseEther("0.001");
+const ethToWithdraw = hre.ethers.parseEther("0.01");
 if (parseFloat(hre.ethers.formatEther(ethToWithdraw)) > vaultEthBalance) {
 console.log("❌ No tienes suficiente ETH en la bóveda para retirar esa cantidad");
 return;

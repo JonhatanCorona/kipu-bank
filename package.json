@@ -3,28 +3,28 @@
   "version": "1.0.0",
   "description": "",
   "main": "index.js",
- "scripts": {
-  "test": "echo \"Error: no test specified\" && exit 1",
-  "deploy": "npx hardhat run scripts/deploy/deploy.js --network sepolia",
-
-  "deposit-eth": "npx hardhat run scripts/bank/deposit-eth.js --network sepolia",
-  "withdraw-eth": "npx hardhat run scripts/bank/withdraw-eth.js --network sepolia",
-  "check-balances": "npx hardhat run scripts/bank/check-balances.js --network sepolia",
-  "check-balance-user": "npx hardhat run scripts/bank/check-balance-user.js --network sepolia",
-  "check-bank-totals": "npx hardhat run scripts/bank/check-bank-totals.js --network sepolia",
-
-  "buy-kusd": "npx hardhat run scripts/token/buy-kusd.js --network sepolia",
-  "sell-kusd": "npx hardhat run scripts/token/sell-kusd.js --network sepolia",
-  "buy-keur": "npx hardhat run scripts/token/buy-keur.js --network sepolia",
-  "sell-keur": "npx hardhat run scripts/token/sell-keur.js --network sepolia",
-  "set-price": "npx hardhat run scripts/token/set-price.js --network sepolia",
-  "set-wallet-limit": "npx hardhat run scripts/token/set-wallet-limit.js --network sepolia",
-  "set-max-sell-amount": "npx hardhat run scripts/token/set-max-sell-amount.js --network sepolia",
-
-  "manage-roles": "npx hardhat run scripts/admin/manageRoles.js --network sepolia",
-  "update-bank-cap": "npx hardhat run scripts/admin/updateBankCap.js --network sepolia",
-  "pause-unpause": "npx hardhat run scripts/admin/pauseUnpause.js --network sepolia"
-},
+  "scripts": {
+    "test": "echo \"Error: no test specified\" && exit 1",
+    "deploy": "npx hardhat run scripts/deploy/deploy.js --network sepolia",
+    "deposit-eth": "npx hardhat run scripts/bank/deposit-eth.js --network sepolia",
+    "deposit-Eth-Usdc":"npx hardhat run scripts/bank/deposit-Eth-Usdc.js --network sepolia",
+    "deposit-Token-Usdc":"npx hardhat run scripts/bank/deposit-Token-Usdc.js --network sepolia",
+    "deposit-Token-Weth-Usdc":"npx hardhat run scripts/bank/deposit-Token-Weth-Usdc.js --network sepolia",
+    "withdraw-eth": "npx hardhat run scripts/bank/withdraw-eth.js --network sepolia",
+    "check-balances": "npx hardhat run scripts/bank/check-balances.js --network sepolia",
+    "check-balance-user": "npx hardhat run scripts/bank/check-balance-user.js --network sepolia",
+    "check-bank-totals": "npx hardhat run scripts/bank/check-bank-totals.js --network sepolia",
+    "buy-kusd": "npx hardhat run scripts/token/buy-kusd.js --network sepolia",
+    "sell-kusd": "npx hardhat run scripts/token/sell-kusd.js --network sepolia",
+    "buy-keur": "npx hardhat run scripts/token/buy-keur.js --network sepolia",
+    "sell-keur": "npx hardhat run scripts/token/sell-keur.js --network sepolia",
+    "set-price": "npx hardhat run scripts/token/set-price.js --network sepolia",
+    "set-wallet-limit": "npx hardhat run scripts/token/set-wallet-limit.js --network sepolia",
+    "set-max-sell-amount": "npx hardhat run scripts/token/set-max-sell-amount.js --network sepolia",
+    "manage-roles": "npx hardhat run scripts/admin/manageRoles.js --network sepolia",
+    "update-bank-cap": "npx hardhat run scripts/admin/updateBankCap.js --network sepolia",
+    "pause-unpause": "npx hardhat run scripts/admin/pauseUnpause.js --network sepolia"
+  },
   "keywords": [],
   "author": "",
   "license": "ISC",
@@ -41,6 +41,8 @@
   "dependencies": {
     "@chainlink/contracts": "^1.5.0",
     "@openzeppelin/contracts": "^5.4.0",
+    "@uniswap/v2-core": "^1.0.1",
+    "@uniswap/v2-periphery": "^1.1.0-beta.0",
     "dotenv": "^17.2.3"
   }
 }

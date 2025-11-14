@@ -14,39 +14,27 @@ async function main() {
   const eurAddress = await bank.eurToken();
   const eur = await hre.ethers.getContractAt("KipuEuro", eurAddress, signer);
 
-  // --- Balance ETH ---
+  // --- Balance ETH del usuario ---
   const userBalanceWei = await provider.getBalance(signer.address);
   const userBalanceEth = parseFloat(hre.ethers.formatEther(userBalanceWei));
   console.log(`💰 Balance actual: ${userBalanceEth.toFixed(6)} ETH`);
 
-  const ethUsdPrice = await bank.getEthUsdPrice();
-  const ethUsd = (Number(ethUsdPrice) / 1e8) * userBalanceEth;
-  console.log(`💵 Equivalente en USD: $${ethUsd.toFixed(2)}\n`);
+  // --- Cantidad a mintar ---
+  const amountToMint = hre.ethers.parseUnits("1", 18); // 100 KEUR
+  console.log(`🛠 Mintando ${hre.ethers.formatUnits(amountToMint, 18)} KEUR para ${signer.address}...`);
 
-  // --- Comprar KEUR ---
-  const ethToSpend = hre.ethers.parseEther("0.0001");
-  console.log(`🛒 Comprando KEUR con ${hre.ethers.formatEther(ethToSpend)} ETH...`);
+  const tx = await bank.mintToken(eurAddress, signer.address, amountToMint);
+  await tx.wait();
 
-  const buyTx = await bank.buyKEUR({ value: ethToSpend });
-  await buyTx.wait();
-  console.log("✅ Compra de KEUR completada!\n");
+  console.log("✅ Mint completado!");
 
-  // --- Balance actualizado de KEUR en bóveda ---
-  const vaults = await bank.getMyVaults();
-  const vaultKeurBalance = parseFloat(hre.ethers.formatUnits(vaults.eurBalance, 18));
+  // --- Consultar balance actualizado de KEUR ---
+  const balance = await eur.balanceOf(signer.address);
+  console.log(`🏦 Balance de KEUR en wallet: ${hre.ethers.formatUnits(balance, 18)} KEUR`);
 
-  // --- Calcular cantidad comprada usando precio del contrato ---
-  const price = await eur.keurPriceInETH(); // BigInt
-  const amountBoughtBN = (ethToSpend * 10n ** 18n) / price;
-  const amountBought = parseFloat(hre.ethers.formatUnits(amountBoughtBN, 18));
-
-  console.log(`💶 KEUR comprados en esta transacción: ${amountBought.toFixed(6)} KEUR`);
-
-  // --- Stats del usuario ---
+  // --- Stats del usuario en KipuBank ---
   const stats = await bank.getMyStats();
-
-  console.log(`🏦 Wallet actualizado de ${signer.address}:`);
-  console.log(`   • KEUR en bóveda: ${vaultKeurBalance.toFixed(6)} KEUR`);
+  console.log(`📊 Stats de usuario:`);
   console.log(`   • Total depósitos/compras: ${stats.depositCount}`);
   console.log(`   • Total retiros/ventas: ${stats.withdrawalCount}`);
 }
@@ -57,3 +45,4 @@ main()
     console.error("❌ Error ejecutando script:", error);
     process.exit(1);
   });
+

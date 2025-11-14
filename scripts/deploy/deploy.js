@@ -1,66 +1,145 @@
 const hre = require("hardhat");
 
 async function main() {
-  const [deployer] = await hre.ethers.getSigners();
-  console.log("🚀 Deploying contracts with account:", deployer.address);
+  console.log("🚀 Deploying contracts on Sepolia with mocks...\n");
 
-  // --- 1. Chainlink feed real ETH/USD en Sepolia (8 decimales)
+  const [deployer] = await hre.ethers.getSigners();
+  console.log("👤 Deployer:", deployer.address);
+
+  // =====================================================
+  // 1️⃣ Deploy Mock USDC
+  // =====================================================
+  const MockERC20 = await hre.ethers.getContractFactory("MockERC20");
+  const usdc = await MockERC20.deploy("Mock USDC", "USDC", 6);
+  await usdc.waitForDeployment();
+  console.log("💵 MockUSDC deployed at:", usdc.target);
+
+  // =====================================================
+  // 2️⃣ Deploy Mock WETH
+  // =====================================================
+  const mockWETH = await MockERC20.deploy("Wrapped Ether", "WETH", 18);
+  await mockWETH.waitForDeployment();
+  console.log("🟣 Mock WETH deployed at:", mockWETH.target);
+
+  // =====================================================
+  // 3️⃣ Deploy Mock UniswapFactory
+  // =====================================================
+  const MockUniswapFactory = await hre.ethers.getContractFactory("MockUniswapFactory");
+  const factory = await MockUniswapFactory.deploy();
+  await factory.waitForDeployment();
+  console.log("🏭 MockUniswapFactory deployed at:", factory.target);
+
+  // =====================================================
+  // 4️⃣ Deploy Mock UniswapRouter
+  // =====================================================
+  const MockUniswapRouter = await hre.ethers.getContractFactory("MockUniswapRouter");
+  const mockRouter = await MockUniswapRouter.deploy(mockWETH.target, factory.target);
+  await mockRouter.waitForDeployment();
+  console.log("🔁 MockUniswapRouter deployed at:", mockRouter.target);
+
+  // =====================================================
+  // 5️⃣ ETH/USD oracle (Sepolia)
+  // =====================================================
   const ethUsdFeed = "0x694AA1769357215DE4FAC081bf1f309aDC325306";
 
-  // Definir el límite en USD. Ejemplo: cien  USD
-  // Usamos parseEther() para obtener  100 con 18 decimales (wei)
-  const bankCapInUSD = hre.ethers.parseEther("100");
-
-  // --- 2. Deploy KipuBank ---
+  // =====================================================
+  // 6️⃣ Deploy KipuBank
+  // =====================================================
   const KipuBank = await hre.ethers.getContractFactory("KipuBank");
+  const withdrawalLimit = hre.ethers.parseEther("0.01");
+  const bankCapInUSD = hre.ethers.parseEther("1000000");
+
   const bank = await KipuBank.deploy(
-  hre.ethers.parseEther("0.01"), // 1. withdrawalLimit: 0.01 ETH (parámetro de límite de retiro en ETH)
-  bankCapInUSD,  // 2. bankCap: 1,000 USD (parámetro de límite global en USD)
-  ethUsdFeed // 3. ETH/USD feed
-);
+    withdrawalLimit,
+    bankCapInUSD,
+    ethUsdFeed,
+    mockRouter.target
+  );
   await bank.waitForDeployment();
   console.log("🏦 KipuBank deployed at:", bank.target);
 
-  // --- 3. Deploy KipuDolar ---
+  // =====================================================
+  // 7️⃣ Deploy KipuUSD
+  // =====================================================
   const KipuDolar = await hre.ethers.getContractFactory("KipuDolar");
-  const kusdWalletLimit = hre.ethers.parseUnits("100", 18); // 100 KUSD
-  const kusdPriceInETH = hre.ethers.parseEther("0.01");     // 0.01 ETH por KUSD
-  const kusdMaxSellAmount = hre.ethers.parseUnits("5", 18);
-
-  const uds = await KipuDolar.deploy(
-    bank.target,          // Banco será SUPER_ADMIN
-    kusdWalletLimit,
-    kusdPriceInETH,
-    kusdMaxSellAmount
-  );
-  await uds.waitForDeployment();
-  console.log("💵 KipuUSD deployed at:", uds.target);
-
-  // --- 4. Deploy KipuEuro ----
-  const KipuEuro = await hre.ethers.getContractFactory("KipuEuro");
-  const keurWalletLimit = hre.ethers.parseUnits("100", 18);
-  const keurPriceInETH = hre.ethers.parseEther("0.02");
-  const keurMaxSellAmount = hre.ethers.parseUnits("5", 18);
-
-  const eur = await KipuEuro.deploy(
+  const kusd = await KipuDolar.deploy(
     bank.target,
-    keurWalletLimit,
-    keurPriceInETH,
-    keurMaxSellAmount
+    hre.ethers.parseUnits("100", 18),
+    hre.ethers.parseEther("0.01"),
+    hre.ethers.parseUnits("5", 18)
   );
-  await eur.waitForDeployment();
-  console.log("💶 KipuEUR deployed at:", eur.target);
+  await kusd.waitForDeployment();
+  console.log("💲 KipuUSD deployed at:", kusd.target);
 
-  // --- 5. Configurar tokens en el banco ---
-  await bank.setTokens(uds.target, eur.target);
+  // =====================================================
+  // 8️⃣ Deploy KipuEUR
+  // =====================================================
+  const KipuEuro = await hre.ethers.getContractFactory("KipuEuro");
+  const keur = await KipuEuro.deploy(
+    bank.target,
+    hre.ethers.parseUnits("100", 18),
+    hre.ethers.parseEther("0.02"),
+    hre.ethers.parseUnits("5", 18)
+  );
+  await keur.waitForDeployment();
+  console.log("💶 KipuEUR deployed at:", keur.target);
+
+  // =====================================================
+  // 9️⃣ Configure tokens in KipuBank
+  // =====================================================
+  await bank.setTokens(kusd.target, keur.target, usdc.target);
   console.log("✅ Tokens configured in KipuBank");
 
-  console.log("🎉 KipuBank assigned as SUPER_ADMIN for KUSD and KEUR");
+  // =====================================================
+  // 🔟 Deploy Otro Token y crear pares
+  // =====================================================
+  const otherToken = await MockERC20.deploy("Test Token", "TTK", 18);
+  await otherToken.waitForDeployment();
+  console.log("🧪 Otro Token deployed at:", otherToken.target);
+
+  // Crear pares en la factory
+  await factory.createPair(otherToken.target, usdc.target);
+  await factory.createPair(kusd.target, usdc.target);
+  await factory.createPair(keur.target, usdc.target);
+  console.log("🔹 Pairs TTK/KUSD/KUER ↔ USDC created in MockUniswapFactory");
+
+  // =====================================================
+  // 1️⃣1️⃣ Configurar tasas mock en el router
+  // =====================================================
+  await mockRouter.setRate(mockWETH.target, usdc.target, hre.ethers.parseUnits("3000", 6)); // 1 ETH = 3000 USDC
+  await mockRouter.setRate(usdc.target, mockWETH.target, hre.ethers.parseUnits("0.000333", 18)); // 1 USDC = 0.000333 ETH
+  await mockRouter.setRate(otherToken.target, usdc.target, hre.ethers.parseUnits("100", 6));
+  await mockRouter.setRate(kusd.target, usdc.target, hre.ethers.parseUnits("1", 6));
+  await mockRouter.setRate(keur.target, usdc.target, hre.ethers.parseUnits("1.1", 6));
+  console.log("🔧 Mock router rates configured");
+
+  // =====================================================
+  // 1️⃣2️⃣ Mint inicial para liquidez en el router
+  // =====================================================
+  const initialUSDC = hre.ethers.parseUnits("100000000", 6); // 100 millones USDC
+  const initialWETH = hre.ethers.parseEther("1000"); // 1000 WETH
+
+  await usdc.mint(mockRouter.target, initialUSDC);
+  console.log(`💵 Mint ${initialUSDC} USDC al MockRouter para swaps`);
+
+  await mockWETH.mint(mockRouter.target, initialWETH);
+  console.log(`🟣 Mint ${initialWETH} WETH al MockRouter para swaps`);
+
+  console.log("\n🎉 Sepolia deploy with mocks complete!\n");
+  console.log({
+    bank: bank.target,
+    kusd: kusd.target,
+    keur: keur.target,
+    usdc: usdc.target,
+    otherToken: otherToken.target,
+    router: mockRouter.target,
+    weth: mockWETH.target,
+    feed: ethUsdFeed,
+    factory: factory.target
+  });
 }
 
-main()
-  .then(() => process.exit(0))
-  .catch((error) => {
-    console.error("❌ Error en el deploy:", error);
-    process.exit(1);
-  });
+main().catch((error) => {
+  console.error("❌ Error in deploy:", error);
+  process.exit(1);
+});
