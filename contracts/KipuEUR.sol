@@ -111,7 +111,7 @@ function setPrice(uint256 newPriceInETH)
 /// @notice Actualiza el monto máximo de venta de KEUR
 /// @dev Puede ser llamado por ADMIN o SUPER_ADMIN
 /// @param newMax Nuevo monto máximo de venta
-function setMinSellAmount(uint256 newMax)
+function setMaxSellAmount(uint256 newMax)
     external
     onlyAdminOrSuper
 {

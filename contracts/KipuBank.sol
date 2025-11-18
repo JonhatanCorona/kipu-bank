@@ -202,8 +202,8 @@ contract KipuBank is AccessControl, ReentrancyGuard, Pausable, PriceOracle {
     error InvalidTokenAddress();
     /// @notice Error lanzado al intentar reducir el límite máximo del banco por debajo de los depósitos existentes
     /// @param newCap Nuevo límite propuesto
-    /// @param totalDeposits Total de depósitos actualmente en el banco
-    error NewCapBelowDeposits(uint256 newCap, uint256 totalDeposits);
+    /// @param totalDepositsInUSD Total de depósitos actualmente en el banco
+    error NewCapBelowDeposits(uint256 newCap, uint256 totalDepositsInUSD);
     /// @notice Error lanzado al intentar vender más tokens de los permitidos por el límite máximo de venta
     /// @param attempted Cantidad de tokens que se intentó vender
     /// @param maxAllowed Máximo permitido de tokens a vender
@@ -875,15 +875,15 @@ function _swapTokenToWETHtoUSDC(
     /// @notice Actualiza la cantidad máxima de KEUR que un usuario puede vender en una sola transacción
     /// @dev Solo accesible por Super Admin
     /// @param newMax Nueva cantidad máxima de venta de KEUR
-    function setEURMaxSellAmount(uint256 newMax) external onlyRole(SUPER_ADMIN_ROLE) {
-        eurToken.setMinSellAmount(newMax);
+    function setKEURMaxSellAmount(uint256 newMax) external onlyRole(SUPER_ADMIN_ROLE) {
+        eurToken.setMaxSellAmount(newMax);
     }
 
     /// @notice Actualiza la cantidad máxima de KUSD que un usuario puede vender en una sola transacción
     /// @dev Solo accesible por Super Admin
     /// @param newMax Nueva cantidad máxima de venta de KUSD
-    function setUSDMaxSellAmount(uint256 newMax) external onlyRole(SUPER_ADMIN_ROLE) {
-        udsToken.setMinSellAmount(newMax);
+    function setKUSDMaxSellAmount(uint256 newMax) external onlyRole(SUPER_ADMIN_ROLE) {
+        udsToken.setMaxSellAmount(newMax);
     }
 
     // ============================
@@ -919,12 +919,21 @@ function _swapTokenToWETHtoUSDC(
 
     /// @notice Actualiza la capacidad máxima total del banco
     /// @dev Solo accesible por Admin o Super Admin.
-    ///      No puede ser menor al total de depósitos actuales.
-    /// @param newCap Nueva capacidad máxima del banco
+    ///      No puede ser menor al total de depósitos actuales (convertidos a USD).
+    /// @param newCap Nueva capacidad máxima del banco (USD, 18 decimales)
     function updateBankCap(uint256 newCap) external onlyAdminOrSuper {
-        if (newCap < totalDeposits) revert NewCapBelowDeposits(newCap, totalDeposits);
-        bankCapUSD = newCap;
-    }
+    // obtener precio ETH/USD (8 decimales)
+    uint256 ethPrice_8dec = getEthUsdPrice();
+    if (ethPrice_8dec == 0) revert InvalidAmount();
+
+    // totalDeposits está en wei (1e18). Convertir a USD (18 decimales):
+    // totalDepositsInUSD = totalDeposits * ethPrice / 1e8
+    uint256 totalDepositsInUSD = (totalDeposits * ethPrice_8dec) / 1e8;
+
+    if (newCap < totalDepositsInUSD) revert NewCapBelowDeposits(newCap, totalDepositsInUSD);
+    bankCapUSD = newCap;
+}
+
 
     /// @notice Pausa todas las operaciones críticas del banco
     /// @dev Solo accesible por Super Admin

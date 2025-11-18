@@ -111,7 +111,7 @@ function setPrice(uint256 newPriceInETH)
 /// @notice Actualiza el monto máximo de venta de KUSD
 /// @dev Solo ADMIN o SUPER_ADMIN pueden modificarlo
 /// @param newMax Nuevo monto máximo de venta
-function setMinSellAmount(uint256 newMax)
+function setMaxSellAmount(uint256 newMax)
     external
     onlyAdminOrSuper
 {

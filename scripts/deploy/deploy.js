@@ -61,12 +61,18 @@ async function main() {
   // =====================================================
   // 7️⃣ Deploy KipuUSD
   // =====================================================
+
+  const kusdPriceInETH = hre.ethers.parseEther("0.01");  // 1 KUSD = 0.01 ETH
+
+  // calcular kusdMaxSellAmount a partir del withdrawalLimit
+  const kusdMaxSellAmount = withdrawalLimit.mul(hre.ethers.parseUnits("1", 18)).div(kusdPriceInETH);
+
   const KipuDolar = await hre.ethers.getContractFactory("KipuDolar");
   const kusd = await KipuDolar.deploy(
     bank.target,
     hre.ethers.parseUnits("100", 18),
-    hre.ethers.parseEther("0.01"),
-    hre.ethers.parseUnits("5", 18)
+    kusdPriceInETH,
+    kusdMaxSellAmount
   );
   await kusd.waitForDeployment();
   console.log("💲 KipuUSD deployed at:", kusd.target);
@@ -74,12 +80,18 @@ async function main() {
   // =====================================================
   // 8️⃣ Deploy KipuEUR
   // =====================================================
+  const keurPriceInETH = hre.ethers.parseEther("0.02");  // Precio de 1 KEUR en ETH
+
+  // Calcular el límite máximo de venta en KEUR equivalente a withdrawalLimit en ETH
+  // withdrawalLimit / keurPriceInETH = cantidad máxima de KEUR
+  const keurMaxSellAmount = withdrawalLimit.mul(hre.ethers.parseUnits("1", 18)).div(keurPriceInETH);
+
   const KipuEuro = await hre.ethers.getContractFactory("KipuEuro");
   const keur = await KipuEuro.deploy(
     bank.target,
-    hre.ethers.parseUnits("100", 18),
-    hre.ethers.parseEther("0.02"),
-    hre.ethers.parseUnits("5", 18)
+    hre.ethers.parseUnits("100", 18),   // límite por wallet (ejemplo)
+    keurPriceInETH,                      // precio KEUR/ETH
+    keurMaxSellAmount                     // límite de venta en KEUR
   );
   await keur.waitForDeployment();
   console.log("💶 KipuEUR deployed at:", keur.target);
