@@ -67,6 +67,10 @@ contract KipuBank is AccessControl, ReentrancyGuard, Pausable, PriceOracle {
         uint256 eurDeposits;
         /// @notice Total de KEUR retirado por el usuario de la bóveda
         uint256 eurWithdrawals;
+
+        uint256 usdcDeposits; 
+
+        uint256 usdcWithdrawals;
     }
 
     /// @notice Totales globales del banco
@@ -93,6 +97,7 @@ contract KipuBank is AccessControl, ReentrancyGuard, Pausable, PriceOracle {
 
         uint256 usdcBalance;      
         uint256 usdcDeposits; 
+        uint256 usdcWithdrawals;
         /// @notice Número total de depósitos realizados en el banco (todos los activos)
         uint256 depositCount;
         /// @notice Número total de retiros realizados en el banco (todos los activos)
@@ -120,8 +125,6 @@ contract KipuBank is AccessControl, ReentrancyGuard, Pausable, PriceOracle {
     /// @notice Contrato del token KEUR (KipuEuro)
     KipuEuro public eurToken;
     IERC20 public usdcToken;
-    uint256 public totalUsdcDeposited;
-
 
     /// @notice Límite máximo de retiro permitido por transacción en ETH
     uint256 public immutable withdrawalLimit;
@@ -143,6 +146,10 @@ contract KipuBank is AccessControl, ReentrancyGuard, Pausable, PriceOracle {
     uint256 private totalEurDeposited;
     /// @notice Total de KEUR retirado por todos los usuarios
     uint256 private totalEurWithdrawn;
+    // @notice Total de USDC depositado por todos los usuarios
+    uint256 public totalUsdcDeposited;
+    /// @notice Total de USDC retirado por todos los usuarios
+    uint256 private totalUsdcWithdrawn; 
 
     // --- Totales de movimientos ---
     /// @notice Número total de depósitos realizados en el banco
@@ -177,6 +184,7 @@ contract KipuBank is AccessControl, ReentrancyGuard, Pausable, PriceOracle {
     /// @param user Dirección del usuario que realizó el retiro
     /// @param amount Monto de KEUR retirado
     event WithdrawEUR(address indexed user, uint256 amount);
+    event WithdrawUSDC(address indexed user, uint256 amount18Dec, uint256 amount6Dec);
     event DepositCompleted(address indexed user, address indexed token, uint256 tokenAmount,uint256 usdcReceived);
 
     // ============================
@@ -539,22 +547,29 @@ function _swapTokenToWETHtoUSDC(
 }
 
 
+    // ------------------------------------------------------------
+    // 🔹 RETIRAR USDC
+    // ------------------------------------------------------------
     function withdrawUSDC(uint256 amount) external nonReentrant validAmount(amount) whenNotPaused {
-        uint256 userBalance = usdVaults[msg.sender];
-        if (amount > userBalance) revert InsufficientToken(amount, userBalance);
-        usdVaults[msg.sender] -= amount;
-        totalUsdWithdrawn += amount;
-        users[msg.sender].withdrawalCount++;
-        users[msg.sender].usdWithdrawals += amount;
 
-        // --- CORRECCIÓN DE DECIMALES ---
-        // Se escala el monto del vault (18 decimales) a 6 decimales para la transferencia
-        uint256 amountToTransfer = amount / 1e12; // 18 dec -> 6 dec
+    uint256 userBalance = usdcVaults[msg.sender];
+    if (amount > userBalance) revert InsufficientToken(amount, userBalance);
 
-        bool success = IERC20(usdcToken).transfer(msg.sender, amountToTransfer);
-        if (!success) revert TransferFailedToken(address(usdcToken));
-        emit WithdrawUSD(msg.sender, amount);
-    }
+    uint256 amountToTransfer = amount / 1e12; 
+    if (amountToTransfer == 0) revert InvalidAmount(); 
+
+    usdcVaults[msg.sender] -= amount;
+    totalUsdcWithdrawn += amount;
+    users[msg.sender].withdrawalCount++;
+    users[msg.sender].usdcWithdrawals += amount;
+
+    // transferencia efectua en 6 decimales
+    bool success = IERC20(usdcToken).transfer(msg.sender, amountToTransfer);
+    if (!success) revert TransferFailedToken(address(usdcToken));
+
+    emit WithdrawUSDC(msg.sender, amount, amountToTransfer);
+}
+
     // ============================
     // COMPRAR Y VENDER KUSD
     // ============================
@@ -835,7 +850,8 @@ function _swapTokenToWETHtoUSDC(
             eurDeposits: totalEurDeposited,
             eurWithdrawals: totalEurWithdrawn,
             usdcBalance: usdcToken.balanceOf(address(this)), 
-            usdcDeposits: totalUsdcDeposited,   
+            usdcDeposits: totalUsdcDeposited,  
+            usdcWithdrawals: totalUsdcWithdrawn,
             depositCount: totalDepositCount,
             withdrawalCount: totalWithdrawalCount
         });
