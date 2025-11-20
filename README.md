@@ -1,6 +1,6 @@
-## 🏦 KipuBankV3
+## 🏦 KipuBank
 
-KipuBankV3 es el centro de liquidez (Liquidity Hub) del ecosistema Kipu en la blockchain de Ethereum.
+KipuBank es el centro de liquidez (Liquidity Hub) del ecosistema Kipu en la blockchain de Ethereum.
 
 Actúa como una bóveda multi-activo avanzada que no solo permite a los usuarios depositar ETH y intercambiar las stablecoins del ecosistema (KUSD, KEUR), sino que también funciona como un agregador de depósitos. Los usuarios pueden depositar ETH, USDC, o cualquier otro token ERC20, que el contrato convertirá automáticamente a USDC utilizando un router de Uniswap V2.
 
